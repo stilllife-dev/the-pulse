@@ -3,6 +3,10 @@
 
 **THE PULSE // 12C** は、世界12都市から届くリアルタイム・ニュースと気象データのビューワーです。
 
+### 🖼 Preview
+<img width="800" height="530" alt="CleanShot 2026-05-05 at 11  29 24" src="https://github.com/user-attachments/assets/2af695d0-1dd8-42f4-8e07-55071b4ef30d" />
+
+
 ---
 
 ### 🚀 Key Features
@@ -10,6 +14,13 @@
 - **12-City Synchronized Feed**: 世界の主要12都市（東京、ロンドン、ニューヨーク、アイスランド、サンパウロ等）のライブニュース、気温、降水確率をリアルタイムに同期。
 - **Dynamic Impact Scaling**: ニュースの文字数に応じて、サイズを自動膨張。
 - **Zero-Key Architecture**: APIキーを必要としない公開ソースのみを利用。
+
+---
+
+## Demo
+https://stilllife-dev.github.io/thepulse-12c/
+
+---
 
 ### 💻 Recommended Environment
 
