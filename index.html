@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ja" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE PULSE // INFINITE FLOW</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sixtyfour+Convergence&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #000; color: #fff; margin: 0; padding: 0; overflow: hidden;
+            font-family: 'Sixtyfour Convergence', sans-serif; text-transform: uppercase;
+            width: 100vw; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        #mainDisplay {
+            width: 94vw; text-align: center; line-height: 0.9; word-wrap: break-word; overflow-wrap: break-word;
+            font-variation-settings: "BNDS" 0, "SCAN" 0, "XAVG" 0, "YAVG" 0;
+            text-shadow: 0 0 25px rgba(255,255,255,0.4); display: block;
+        }
+        #sourceLabel {
+            font-size: 14px; opacity: 0.7; letter-spacing: 0.3em; margin-top: 4vh; height: 20px;
+            text-shadow: 0 0 8px rgba(255,255,255,0.3);
+        }
+        #subDisplay {
+            font-size: 16px; opacity: 0.2; letter-spacing: 0.5em; margin-top: 6vh; text-align: center;
+        }
+        .unit { opacity: 0.6; margin-left: 0.1em; font-size: 0.6em; }
+    </style>
+</head>
+<body>
+
+    <div id="mainDisplay">CONNECTING</div>
+    <div id="sourceLabel"></div>
+    <div id="subDisplay">
+        <span id="cityName">---</span> / <span id="localTime">--:--:--</span>
+    </div>
+
+<script>
+    const mainDisplay = document.getElementById('mainDisplay');
+    const sourceLabel = document.getElementById('sourceLabel');
+    const cityName = document.getElementById('cityName');
+    const localTime = document.getElementById('localTime');
+
+    // 都市リストを12都市に拡大
+    const cities = [
+        { name: "TOKYO", lat: 35.68, lon: 139.76, tz: 'Asia/Tokyo' },
+        { name: "LONDON", lat: 51.51, lon: -0.13, tz: 'Europe/London' },
+        { name: "NEW YORK", lat: 40.71, lon: -74.00, tz: 'America/New_York' },
+        { name: "REYKJAVIK", lat: 64.13, lon: -21.90, tz: 'Atlantic/Reykjavik' },
+        { name: "SYDNEY", lat: -33.87, lon: 151.21, tz: 'Australia/Sydney' },
+        { name: "PARIS", lat: 48.85, lon: 2.35, tz: 'Europe/Paris' },
+        { name: "CAIRO", lat: 30.04, lon: 31.23, tz: 'Africa/Cairo' },
+        { name: "MUMBAI", lat: 19.07, lon: 72.87, tz: 'Asia/Kolkata' },
+        { name: "SÃO PAULO", lat: -23.55, lon: -46.63, tz: 'America/Sao_Paulo' },
+        { name: "DUBAI", lat: 25.20, lon: 55.27, tz: 'Asia/Dubai' },
+        { name: "SINGAPORE", lat: 1.35, lon: 103.81, tz: 'Asia/Singapore' },
+        { name: "BERLIN", lat: 52.52, lon: 13.40, tz: 'Europe/Berlin' }
+    ];
+
+    let currentCityIndex = Math.floor(Math.random() * cities.length);
+    let weatherData = { temp: 0, rain: 0 };
+    let newsFeed = [];
+    let newsPointer = 0;
+
+    function fitText() {
+        let size = 450; 
+        const maxHeight = window.innerHeight * 0.72; 
+        mainDisplay.style.fontSize = size + "px";
+        while (mainDisplay.offsetHeight > maxHeight && size > 20) {
+            size -= 3;
+            mainDisplay.style.fontSize = size + "px";
+        }
+        mainDisplay.style.fontSize = (size * 0.95) + "px";
+    }
+
+    // データを取得して「準備完了」にする関数
+    async function fetchNextData() {
+        const city = cities[currentCityIndex];
+        try {
+            const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m&hourly=precipitation_probability`);
+            const wJson = await wRes.json();
+            weatherData.temp = wJson.current.temperature_2m;
+            weatherData.rain = wJson.hourly.precipitation_probability[0];
+
+            const nRes = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent("http://feeds.bbci.co.uk/news/world/rss.xml")}`);
+            const nData = await nRes.json();
+            
+            // ニュースをシャッフルして保持
+            let newNews = nData.items.map(item => item.title.toUpperCase());
+            newsFeed = newNews.sort(() => Math.random() - 0.5);
+            newsPointer = 0;
+        } catch (e) { console.error("Sync Error"); }
+    }
+
+    let displayMode = 0; 
+
+    function updateDisplay() {
+        const city = cities[currentCityIndex];
+        let targetText = "";
+        let showSource = false;
+
+        if (displayMode === 0) {
+            // 順番にニュースを表示
+            if (newsFeed.length > 0) {
+                targetText = newsFeed[newsPointer];
+                newsPointer = (newsPointer + 1) % newsFeed.length;
+            } else {
+                targetText = "CONNECTING GLOBAL FEED";
+            }
+            showSource = true;
+        } else if (displayMode === 1) {
+            targetText = `${weatherData.temp}<span class="unit">°C</span>`;
+        } else {
+            targetText = `RAIN <span class="unit">${weatherData.rain}%</span>`;
+        }
+
+        sourceLabel.innerText = showSource ? "SOURCE: BBC WORLD NEWS // LIVE" : "";
+        cityName.innerText = city.name;
+
+        // パタパタ演出
+        const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        let step = 0;
+        const interval = setInterval(() => {
+            let rnd = "";
+            const plain = targetText.replace(/<[^>]*>/g, "");
+            for(let i=0; i<plain.length; i++) rnd += chars[Math.floor(Math.random() * chars.length)];
+            mainDisplay.innerText = rnd;
+            fitText(); 
+            if(step > 7) {
+                clearInterval(interval);
+                mainDisplay.innerHTML = targetText;
+                fitText(); 
+            }
+            step++;
+        }, 40);
+
+        // モード切替
+        displayMode = (displayMode + 1) % 3;
+        
+        // 1セット（News/Temp/Rain）終わったら都市を切り替え、次のデータを取得
+        if (displayMode === 0) {
+            currentCityIndex = (currentCityIndex + 1) % cities.length;
+            fetchNextData();
+        }
+    }
+
+    function updateClock() {
+        const now = new Date();
+        const city = cities[currentCityIndex];
+        localTime.innerText = now.toLocaleTimeString('ja-JP', { timeZone: city.tz, hour12: false });
+        requestAnimationFrame(updateClock);
+    }
+
+    // 起動
+    document.fonts.ready.then(async () => {
+        await fetchNextData();
+        updateDisplay();
+        setInterval(updateDisplay, 8500);
+        updateClock();
+    });
+
+    window.onresize = fitText;
+</script>
+</body>
+</html>
