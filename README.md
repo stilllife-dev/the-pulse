@@ -18,7 +18,7 @@
 ---
 
 ## Demo
-https://stilllife-dev.github.io/thepulse-12c/
+https://stilllife-dev.github.io/the-pulse/
 
 ---
 
